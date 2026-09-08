@@ -40,8 +40,8 @@ db.serialize(() => {
 
 // 3. RUTA PRINCIPAL EXPLÍCITA (Aquí es donde obligamos a Node a entregar el HTML)
 app.get('/', (req, res) => {
-    const archivoHtml = path.join(__dirname, 'tienda.html');
-    res.sendFile(archivoHtml);
+    res.sendFile(path.join(__dirname, 'tienda.html')); // O 'index.html' según cómo lo hayas nombrado
+});
 });
 
 // 4. API de productos
