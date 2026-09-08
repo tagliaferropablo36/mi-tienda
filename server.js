@@ -66,8 +66,9 @@ app.get('/api/productos', (req, res) => {
 
 // 2. Agregar un producto (Panel de Administrador)
 app.post('/api/productos', (req, res) => {
-    const { nombre, categoria, precio } = req.body;
-    db.run(`INSERT INTO productos (nombre, categoria, precio) VALUES (?, ?, ?)`, [nombre, categoria, precio], function(err) {
+    const { nombre, categoria, precio, imagen } = req.body;
+    db.run(`INSERT INTO productos (nombre, categoria, precio, imagen) VALUES (?, ?, ?, ?)`, 
+    [nombre, categoria, precio, imagen || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'], function(err) {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
