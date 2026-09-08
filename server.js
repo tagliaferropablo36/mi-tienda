@@ -43,7 +43,7 @@ db.serialize(() => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html')); // O 'index.html' según cómo lo hayas nombrado
 });
-});
+
 
 // 4. API de productos
 app.get('/api/productos', (req, res) => {
