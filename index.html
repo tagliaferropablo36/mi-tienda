@@ -7,15 +7,18 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; color: #333; }
         header { background: #222; color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        nav a { color: #fff; margin-left: 15px; text-decoration: none; cursor: pointer; }
+        nav a { color: #fff; margin-left: 15px; text-decoration: none; cursor: pointer; font-weight: bold; }
+        nav a:hover { text-decoration: underline; }
         .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-        .card h3 { margin: 10px 0; }
-        .btn { background: #007bff; color: #white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; color: white; }
+        .card { background: #fff; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+        .card img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
+        .card h3 { margin: 10px 0 5px 0; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn:hover { background: #0056b3; }
-        .cart-section, .admin-section, .login-section { background: #fff; padding: 1.5rem; border-radius: 8px; margin-top: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none; }
-        input { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .cart-section, .admin-section, .login-section { background: #fff; padding: 2rem; border-radius: 8px; margin-top: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none; }
+        input { padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        ul { padding-left: 20px; text-align: left; }
     </style>
 </head>
 <body>
@@ -35,18 +38,7 @@
         <div id="seccion-productos">
             <h2>Catálogo de Productos</h2>
             <div id="productos-grid" class="grid">
-                productos.forEach(p => {
-    grid.innerHTML += `
-        <div class="card">
-            <img src="${p.imagen || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'}" alt="${p.nombre}" style="width:100%; height:150px; object-fit:cover; border-radius:4px;">
-            <h3>${p.nombre}</h3>
-            <p style="color: #666; font-size: 0.9rem;">${p.categoria}</p>
-            <p style="font-size: 1.2rem; font-weight: bold; color: #28a745;">$${p.precio}</p>
-            <button class="btn" onclick='agregarAlCarrito(${JSON.stringify(p)})'>Agregar al Carrito</button>
-        </div>
-    `;
-});
-                <!-- Se cargan por JavaScript -->
+                <!-- Se cargan dinámicamente por JavaScript -->
             </div>
         </div>
 
@@ -54,15 +46,16 @@
         <div id="seccion-carrito" class="cart-section">
             <h2>Tu Carrito de Compras</h2>
             <div id="carrito-lista">Tu carrito está vacío.</div>
-            <h3 id="carrito-total">Total: $0</h3>
-            <button class="btn" onclick="alert('¡Compra realizada con éxito!')">Finalizar Compra</button>
+            <h3 id="carrito-total" style="margin-top: 20px;">Total: $0</h3>
+            <button class="btn" style="background: #28a745;" onclick="finalizarCompra()">Finalizar Compra</button>
         </div>
 
         <!-- SECCIÓN DE LOGIN -->
         <div id="seccion-login" class="login-section">
             <h2>Iniciar Sesión</h2>
-            <input type="email" id="login-email" placeholder="Correo (ej: admin@tienda.com)">
-            <input type="password" id="login-password" placeholder="Contraseña (ej: 123456)">
+            <p style="color: #666; font-size: 0.9rem;">Usa el usuario por defecto: <b>admin@tienda.com</b> / Contraseña: <b>123456</b></p>
+            <input type="email" id="login-email" placeholder="Correo electrónico">
+            <input type="password" id="login-password" placeholder="Contraseña">
             <button class="btn" onclick="realizarLogin()">Entrar</button>
         </div>
 
@@ -70,9 +63,10 @@
         <div id="seccion-admin" class="admin-section">
             <h2>Panel de Administración - Agregar Producto</h2>
             <input type="text" id="nuevo-nombre" placeholder="Nombre del producto">
-            <input type="text" id="nuevo-categoria" placeholder="Categoría">
-            <input type="number" id="nuevo-precio" placeholder="Precio">
-            <button class="btn" onclick="agregarProducto()">Guardar Producto</button>
+            <input type="text" id="nuevo-categoria" placeholder="Categoría (ej: Tecnología o Perfumes)">
+            <input type="number" id="nuevo-precio" placeholder="Precio ($)">
+            <input type="text" id="nuevo-imagen" placeholder="URL de la imagen (Opcional, déjalo vacío para usar una por defecto)">
+            <button class="btn" style="background: #28a745;" onclick="agregarProducto()">Guardar Producto en la Base de Datos</button>
         </div>
     </div>
 
@@ -85,12 +79,19 @@
                 const productos = await res.json();
                 const grid = document.getElementById('productos-grid');
                 grid.innerHTML = '';
+                
                 productos.forEach(p => {
+                    // Si no tiene imagen registrada, le ponemos una por defecto bonita
+                    const imgUrl = p.imagen && p.imagen.trim() !== '' ? p.imagen : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300';
+                    
                     grid.innerHTML += `
                         <div class="card">
-                            <h3>${p.nombre}</h3>
-                            <p>Categoría: ${p.categoria}</p>
-                            <p><strong>$${p.precio}</strong></p>
+                            <div>
+                                <img src="${imgUrl}" alt="${p.nombre}">
+                                <h3>${p.nombre}</h3>
+                                <p style="color: #666; font-size: 0.9rem; margin: 5px 0;">Categoría: ${p.categoria}</p>
+                                <p style="font-size: 1.2rem; font-weight: bold; color: #28a745; margin: 10px 0;">$${p.precio}</p>
+                            </div>
                             <button class="btn" onclick='agregarAlCarrito(${JSON.stringify(p)})'>Agregar al Carrito</button>
                         </div>
                     `;
@@ -115,9 +116,27 @@
                 totalElem.innerText = "Total: $0";
                 return;
             }
-            lista.innerHTML = "<ul>" + carrito.map(item => `<li>${item.nombre} - $${item.precio}</li>`).join('') + "</ul>";
+            let html = "<ul>";
+            carrito.forEach((item, index) => {
+                html += `<li>${item.nombre} - $${item.precio}</li>`;
+            });
+            html += "</ul>";
+            lista.innerHTML = html;
+
             const total = carrito.reduce((acc, item) => acc + item.precio, 0);
             totalElem.innerText = `Total: $${total.toFixed(2)}`;
+        }
+
+        function finalizarCompra() {
+            if (carrito.length === 0) {
+                alert("Tu carrito está vacío.");
+                return;
+            }
+            alert('¡Compra realizada con éxito! Gracias por tu preferencia.');
+            carrito = [];
+            document.getElementById('cart-count').innerText = 0;
+            actualizarCarritoHTML();
+            mostrarSeccion('productos');
         }
 
         function mostrarSeccion(seccion) {
@@ -138,14 +157,14 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('¡Bienvenido ' + data.email + '!');
+                    alert('¡Bienvenido administrador!');
                     if (data.rol === 'admin') {
                         document.getElementById('nav-admin').style.display = 'inline';
-                        alert('Modo Administrador activado. Ya puedes ver la pestaña Admin.');
+                        alert('Modo Administrador activado. Ya puedes ver la nueva pestaña "Admin" en el menú.');
                     }
                     mostrarSeccion('productos');
                 } else {
-                    alert('Credenciales incorrectas');
+                    alert('Correo o contraseña incorrectos');
                 }
             } catch (e) {
                 alert('Error al conectar con el servidor');
@@ -156,26 +175,37 @@
             const nombre = document.getElementById('nuevo-nombre').value;
             const categoria = document.getElementById('nuevo-categoria').value;
             const precio = parseFloat(document.getElementById('nuevo-precio').value);
+            const imagen = document.getElementById('nuevo-imagen').value;
 
-            const res = await fetch('/api/productos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, categoria, precio })
-            });
+            if (!nombre || !categoria || isNaN(precio)) {
+                alert('Por favor completa al menos el nombre, categoría y precio.');
+                return;
+            }
 
-            if (res.ok) {
-                alert('¡Producto agregado con éxito!');
-                document.getElementById('nuevo-nombre').value = '';
-                document.getElementById('nuevo-categoria').value = '';
-                document.getElementById('nuevo-precio').value = '';
-                cargarProductos();
-                mostrarSeccion('productos');
-            } else {
-                alert('Error al agregar el producto');
+            try {
+                const res = await fetch('/api/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, categoria, precio, imagen })
+                });
+
+                if (res.ok) {
+                    alert('¡Producto agregado con éxito a la base de datos!');
+                    document.getElementById('nuevo-nombre').value = '';
+                    document.getElementById('nuevo-categoria').value = '';
+                    document.getElementById('nuevo-precio').value = '';
+                    document.getElementById('nuevo-imagen').value = '';
+                    cargarProductos();
+                    mostrarSeccion('productos');
+                } else {
+                    alert('Error al guardar el producto');
+                }
+            } catch (e) {
+                alert('Error de red al agregar producto');
             }
         }
 
-        // Cargar productos al iniciar la página
+        // Cargar productos al abrir la página
         window.onload = cargarProductos;
     </script>
 </body>
