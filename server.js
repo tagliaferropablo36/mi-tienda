@@ -1,62 +1,109 @@
 const express = require('express');
-const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname))); // Sirve el index.html y assets desde la raíz
 
-// 1. Conexión a la base de datos
-const dbPath = path.join(__dirname, 'tienda.db');
-const db = new sqlite3.Database(dbPath, (err) => {
+// Conexión a la Base de Datos SQLite
+const dbFile = path.join(__dirname, 'tienda.db');
+const db = new sqlite3.Database(dbFile, (err) => {
     if (err) {
-        console.error('Error al conectar con la base de datos:', err.message);
+        console.error('Error al conectar con SQLite:', err.message);
     } else {
         console.log('Conectado a la base de datos SQLite.');
     }
 });
 
-// 2. Crear tabla y datos de prueba si no existen
+// Crear tablas iniciales si no existen
 db.serialize(() => {
+    // Tabla de Productos
     db.run(`CREATE TABLE IF NOT EXISTS productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL,
-        categoria TEXT,
+        categoria TEXT NOT NULL,
         precio REAL NOT NULL,
-        img TEXT
-    )`, () => {
-        db.get("SELECT COUNT(*) as count FROM productos", (err, row) => {
-            if (row && row.count === 0) {
-                db.run(`INSERT INTO productos (nombre, categoria, precio, img) VALUES 
-                    ('Smartphone Pro Max', 'Tecnología', 850, 'https://via.placeholder.com/150/5DADE2/FFFFFF?text=Celular'),
-                    ('Perfume Elegance', 'Perfumes', 120, 'https://via.placeholder.com/150/F2F3F4/5DADE2?text=Perfume')`);
-            }
-        });
+        imagen TEXT
+    )`);
+
+    // Tabla de Usuarios (para Login y Admin)
+    db.run(`CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        rol TEXT DEFAULT 'cliente'
+    )`);
+
+    // Insertar productos de prueba si la tabla está vacía
+    db.get("SELECT COUNT(*) as count FROM productos", (err, row) => {
+        if (row.count === 0) {
+            db.run(`INSERT INTO productos (nombre, categoria, precio) VALUES 
+                ('Smartphone Pro Max', 'Tecnología', 850),
+                ('Perfume Elegance', 'Perfumes', 120),
+                ('Auriculares Inalámbricos', 'Tecnología', 199.99),
+                ('Perfume Midnight', 'Perfumes', 85)`);
+            console.log('Productos de prueba insertados.');
+        }
+    });
+
+    // Insertar un usuario Administrador por defecto (admin@tienda.com / 123456)
+    db.get("SELECT COUNT(*) as count FROM usuarios", (err, row) => {
+        if (row.count === 0) {
+            db.run(`INSERT INTO usuarios (email, password, rol) VALUES ('admin@tienda.com', '123456', 'admin')`);
+            console.log('Usuario administrador creado (admin@tienda.com / 123456).');
+        }
     });
 });
 
-// 3. RUTA PRINCIPAL EXPLÍCITA (Aquí es donde obligamos a Node a entregar el HTML)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html')); // O 'index.html' según cómo lo hayas nombrado
-});
+// --- RUTAS DE LA API ---
 
-
-// 4. API de productos
+// 1. Obtener todos los productos
 app.get('/api/productos', (req, res) => {
     db.all("SELECT * FROM productos", [], (err, rows) => {
         if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+            return res.status(500).json({ error: err.message });
         }
         res.json(rows);
     });
 });
 
-// 5. Encender servidor
+// 2. Agregar un producto (Panel de Administrador)
+app.post('/api/productos', (req, res) => {
+    const { nombre, categoria, precio } = req.body;
+    db.run(`INSERT INTO productos (nombre, categoria, precio) VALUES (?, ?, ?)`, [nombre, categoria, precio], function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ id: this.lastID, nombre, categoria, precio });
+    });
+});
+
+// 3. Ruta de Inicio de Sesión (Login)
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body;
+    db.get(`SELECT * FROM usuarios WHERE email = ? AND password = ?`, [email, password], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+        }
+        res.json({ success: true, rol: user.rol, email: user.email });
+    });
+});
+
+// Ruta principal para servir el HTML
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
