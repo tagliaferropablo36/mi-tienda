@@ -72,7 +72,7 @@
 
     <script>
         // Cargar los productos desde nuestra API de Node.js
-        fetch('http://localhost:3000/api/productos')
+        fetch('/api/productos')
             .then(response => response.json())
             .then(productos => {
                 const contenedor = document.getElementById('lista-productos');
