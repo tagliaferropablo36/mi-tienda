@@ -41,26 +41,17 @@ db.serialize(() => {
     )`);
 
     // Insertar productos de prueba si la tabla está vacía
-    db.get("SELECT COUNT(*) as count FROM productos", (err, row) => {
-        if (row.count === 0) {
-            db.run(`INSERT INTO productos (nombre, categoria, precio) VALUES 
-                ('Smartphone Pro Max', 'Tecnología', 850),
-                ('Perfume Elegance', 'Perfumes', 120),
-                ('Auriculares Inalámbricos', 'Tecnología', 199.99),
-                ('Perfume Midnight', 'Perfumes', 85)`);
-            console.log('Productos de prueba insertados.');
-        }
-    });
-
-    // Insertar un usuario Administrador por defecto (admin@tienda.com / 123456)
-    db.get("SELECT COUNT(*) as count FROM usuarios", (err, row) => {
-        if (row.count === 0) {
-            db.run(`INSERT INTO usuarios (email, password, rol) VALUES ('admin@tienda.com', '123456', 'admin')`);
-            console.log('Usuario administrador creado (admin@tienda.com / 123456).');
-        }
-    });
+    
+db.get("SELECT COUNT(*) as count FROM productos", (err, row) => {
+    if (row.count === 0) {
+        db.run(`INSERT INTO productos (nombre, categoria, precio, imagen) VALUES 
+            ('Smartphone Pro Max', 'Tecnología', 850, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300'),
+            ('Perfume Elegance', 'Perfumes', 120, 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=300'),
+            ('Auriculares Inalámbricos', 'Tecnología', 199.99, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300'),
+            ('Perfume Midnight', 'Perfumes', 85, 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=300')`);
+        console.log('Productos con imágenes de prueba insertados.');
+    }
 });
-
 // --- RUTAS DE LA API ---
 
 // 1. Obtener todos los productos
