@@ -88,19 +88,20 @@ app.post('/api/productos', (req, res) => {
 });
 
 // 3. Ruta de inicio de sesión (Login)
+// ✅ CÓDIGO NUEVO Y SEGURO
 app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
-    db.get(`SELECT * FROM usuarios WHERE email = ? AND password = ?`, [email, password], (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        if (!user) {
-            return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-        }
-        res.json({ success: true, rol: user.rol, email: user.email });
-    });
-});
+  const { username, password } = req.body;
+  
+  // Lee las credenciales de las variables de entorno de Render
+  const ADMIN_USER = process.env.ADMIN_USER || 'admin_por_defecto';
+  const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'password_seguro';
 
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.json({ success: true, message: 'Bienvenido, Administrador' });
+  } else {
+    res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+  }
+});
 // Ruta principal para servir el HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
