@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -239,4 +239,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
->>>>>>> 07afbf4b58f7e070145312c482f5fe0c27cb8939
+
