@@ -1,15 +1,9 @@
 {
-<<<<<<< HEAD
-  "name": "mistiendas",
-=======
   "name": "mi-tienda",
->>>>>>> 07afbf4b58f7e070145312c482f5fe0c27cb8939
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
-<<<<<<< HEAD
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
   "keywords": [],
@@ -17,16 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
-=======
-    "start": "node server.js"
-  },
-  "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "sqlite3": "^5.1.7"
->>>>>>> 07afbf4b58f7e070145312c482f5fe0c27cb8939
   }
 }
