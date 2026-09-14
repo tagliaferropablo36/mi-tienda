@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda Profesional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
+        <h1 class="text-2xl font-bold text-blue-600 cursor-pointer" onclick="verTienda()">MiTienda.com</h1>
+        <div class="flex gap-4 items-center">
+            <button onclick="abrirCarrito()" class="relative bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                🛒 Carrito
+                <span id="cart-count" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+            </button>
+            <div id="user-menu">
+                <button onclick="abrirModalAuth()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Iniciar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container mx-auto p-6">
+        <div id="vista-tienda">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">Catálogo de Productos</h2>
+                <div id="admin-btn-container"></div>
+            </div>
+            <div id="productos-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Productos dinámicos -->
+            </div>
+        </div>
+
+        <!-- Vista Panel de Administración -->
+        <div id="vista-admin" class="hidden bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Panel de Administración</h2>
+            <div class="bg-gray-50 p-4 rounded-lg border mb-6">
+                <h3 class="font-bold text-lg mb-3">Agregar Nuevo Producto</h3>
+                <form onsubmit="agregarProductoAdmin(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="admin-nombre" placeholder="Nombre del producto" class="border p-2 rounded bg-white" required>
+                    <input type="text" id="admin-categoria" placeholder="Categoría (Ej: Tecnología)" class="border p-2 rounded bg-white">
+                    <input type="number" id="admin-precio" placeholder="Precio ($)" class="border p-2 rounded bg-white" required>
+                    <input type="text" id="admin-img" placeholder="URL de la imagen" class="border p-2 rounded bg-white">
+                    <button type="submit" class="md:col-span-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold">Guardar Producto</button>
+                </form>
+            </div>
+            <h3 class="font-bold text-lg mb-3">Inventario y Gestión</h3>
+            <div id="admin-productos-lista" class="space-y-2 max-h-72 overflow-y-auto mb-6 border p-3 rounded bg-gray-50"></div>
+            <button onclick="verTienda()" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-black">Volver a la Tienda</button>
+        </div>
+    </main>
+
+    <!-- Modal Detalle del Producto (Al hacer click en la imagen) -->
+    <div id="modal-detalle" class="hidden fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative animate-in fade-in zoom-in">
+            <button onclick="cerrarModalDetalle()" class="absolute top-3 right-4 text-gray-400 hover:text-black font-bold text-2xl">&times;</button>
+            <div class="flex flex-col items-center">
+                <img id="detalle-img" src="" alt="" class="w-full h-64 object-cover rounded-xl shadow-md mb-4 cursor-pointer">
+                <span id="detalle-categoria" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full uppercase tracking-wider font-semibold mb-2"></span>
+                <h3 id="detalle-nombre" class="text-2xl font-bold text-gray-800 text-center mb-2"></h3>
+                <p id="detalle-precio" class="text-green-600 font-extrabold text-2xl mb-6"></p>
+                <button id="detalle-btn-comprar" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">Añadir al Carrito</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Lateral del Carrito -->
+    <div id="cart-modal" class="hidden fixed inset-0 bg-black/50 flex justify-end z-50">
+        <div class="bg-white w-full max-w-md h-full p-6 shadow-2xl flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Tu Carrito de Compras</h3>
+                    <button onclick="cerrarCarrito()" class="text-gray-500 hover:text-black font-bold text-2xl">&times;</button>
+                </div>
+                <div id="cart-items" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
+            </div>
+            <div class="border-t pt-4">
+                <div class="flex justify-between text-lg font-bold mb-4">
+                    <span>Total a pagar:</span>
+                    <span id="cart-total" class="text-green-600">$0</span>
+                </div>
+                <button onclick="finalizarCompra()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">Proceder al Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticación -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-96 relative">
+            <button onclick="cerrarModalAuth()" class="absolute top-2 right-4 text-gray-500 font-bold text-xl">&times;</button>
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Iniciar Sesión</h3>
+            <form id="auth-form" onsubmit="manejarAuth(event)" class="flex flex-col gap-4">
+                <input type="text" id="nombre" placeholder="Nombre completo" class="border p-2 rounded hidden">
+                <input type="email" id="email" placeholder="Correo electrónico" class="border p-2 rounded" required>
+                <input type="password" id="password" placeholder="Contraseña" class="border p-2 rounded" required>
+                <button type="submit" id="auth-btn" class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Entrar</button>
+            </form>
+            <p id="auth-switch-text" class="text-sm text-center mt-4 text-gray-600 cursor-pointer" onclick="cambiarModoAuth()">
+                ¿No tienes cuenta? <span class="text-blue-600 font-bold">Regístrate aquí</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let esRegistro = false;
+        let usuarioActual = null;
+        let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+        // Funcionalidad del Carrito
+        function abrirCarrito() { document.getElementById('cart-modal').classList.remove('hidden'); renderizarCarrito(); }
+        function cerrarCarrito() { document.getElementById('cart-modal').classList.add('hidden'); }
+
+        function agregarAlCarrito(id, nombre, precio, img) {
+            const productoExistente = carrito.find(item => item.id === id);
+            if (productoExistente) {
+                productoExistente.cantidad += 1;
+            } else {
+                carrito.push({ id, nombre, precio, img, cantidad: 1 });
+            }
+            guardarYActualizarCarrito();
+            alert(`¡"${nombre}" se añadió al carrito!`);
+        }
+
+        function cambiarCantidad(id, cambio) {
+            const item = carrito.find(p => p.id === id);
+            if (item) {
+                item.cantidad += cambio;
+                if (item.cantidad <= 0) carrito = carrito.filter(p => p.id !== id);
+            }
+            guardarYActualizarCarrito();
+        }
+
+        function guardarYActualizarCarrito() {
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarContadorCarrito();
+            renderizarCarrito();
+        }
+
+        function actualizarContadorCarrito() {
+            const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            document.getElementById('cart-count').innerText = totalItems;
+        }
+
+        function renderizarCarrito() {
+            const contenedor = document.getElementById('cart-items');
+            const totalElemento = document.getElementById('cart-total');
+            contenedor.innerHTML = '';
+
+            if (carrito.length === 0) {
+                contenedor.innerHTML = `<p class="text-gray-500 text-center py-8">Tu carrito está vacío</p>`;
+                totalElemento.innerText = '$0';
+                return;
+            }
+
+            let total = 0;
+            carrito.forEach(item => {
+                total += item.precio * item.cantidad;
+                contenedor.innerHTML += `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border">
+                        <img src="${item.img}" class="w-12 h-12 object-cover rounded-md">
+                        <div class="flex-1 ml-3">
+                            <h4 class="font-bold text-sm text-gray-800">${item.nombre}</h4>
+                            <p class="text-green-600 font-semibold text-sm">$${item.precio} x ${item.cantidad}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="cambiarCantidad(${item.id}, -1)" class="bg-gray-200 px-2 py-1 rounded font-bold text-sm hover:bg-gray-300">-</button>
+                            <span class="font-bold text-sm">${item.cantidad}</span>
+                            <button onclick="cambiarCantidad(${item.id}, 1)" class="bg-gray-200 px-2 py-1 rounded font-bold text-sm hover:bg-gray-300">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            totalElemento.innerText = `$${total.toLocaleString()}`;
+        }
+
+        function finalizarCompra() {
+            if (carrito.length === 0) { alert("Tu carrito está vacío."); return; }
+            alert("¡Compra simulada con éxito! Gracias por tu pedido.");
+            carrito = [];
+            guardarYActualizarCarrito();
+            cerrarCarrito();
+        }
+
+        // Modal Detalle de Imagen / Producto
+        function abrirDetalleProducto(id, nombre, precio, img, categoria) {
+            document.getElementById('detalle-img').src = img;
+            document.getElementById('detalle-nombre').innerText = nombre;
+            document.getElementById('detalle-precio').innerText = `$${precio}`;
+            document.getElementById('detalle-categoria').innerText = categoria;
+            
+            // Asignar acción al botón del modal
+            const btnComprar = document.getElementById('detalle-btn-comprar');
+            btnComprar.onclick = function() {
+                agregarAlCarrito(id, nombre, precio, img);
+                cerrarModalDetalle();
+            };
+
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
+        function cerrarModalDetalle() {
+            document.getElementById('modal-detalle').classList.add('hidden');
+        }
+
+        // Autenticación y Modales
+        function abrirModalAuth() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function cerrarModalAuth() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+        function cambiarModoAuth() {
+            esRegistro = !esRegistro;
+            document.getElementById('modal-title').innerText = esRegistro ? 'Crear una Cuenta' : 'Iniciar Sesión';
+            document.getElementById('nombre').classList.toggle('hidden', !esRegistro);
+            document.getElementById('auth-btn').innerText = esRegistro ? 'Registrarse' : 'Entrar';
+            document.getElementById('auth-switch-text').innerHTML = esRegistro 
+                ? '¿Ya tienes cuenta? <span class="text-blue-600 font-bold">Inicia sesión aquí</span>' 
+                : '¿No tienes cuenta? <span class="text-blue-600 font-bold">Regístrate aquí</span>';
+        }
+
+        async function manejarAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const nombre = document.getElementById('nombre').value;
+
+            const endpoint = esRegistro ? '/api/registro' : '/api/login';
+            const payload = esRegistro ? { nombre, email, password } : { email, password };
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(data.mensaje || "¡Éxito!");
+                    cerrarModalAuth();
+                    if (!esRegistro) {
+                        usuarioActual = data.usuario;
+                        actualizarInterfazUsuario();
+                    } else {
+                        alert("Registro exitoso. Ahora inicia sesión.");
+                        cambiarModoAuth();
+                    }
+                } else {
+                    alert(data.error || "Ocurrió un error");
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function actualizarInterfazUsuario() {
+            const userMenu = document.getElementById('user-menu');
+            const adminContainer = document.getElementById('admin-btn-container');
+
+            if (usuarioActual) {
+                userMenu.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-700 font-semibold text-sm">Hola, ${usuarioActual.nombre}</span>
+                        <button onclick="cerrarSesion()" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Salir</button>
+                    </div>
+                `;
+                if (usuarioActual.email === 'admin@tienda.com' || usuarioActual.rol === 'admin') {
+                    adminContainer.innerHTML = `<button onclick="verAdmin()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow">Panel Admin</button>`;
+                }
+            }
+        }
+
+        function cerrarSesion() {
+            usuarioActual = null;
+            document.getElementById('user-menu').innerHTML = `<button onclick="abrirModalAuth()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Iniciar Sesión</button>`;
+            document.getElementById('admin-btn-container').innerHTML = '';
+            verTienda();
+        }
+
+        function verAdmin() {
+            document.getElementById('vista-tienda').classList.add('hidden');
+            document.getElementById('vista-admin').classList.remove('hidden');
+            cargarAdminProductos();
+        }
+
+        function verTienda() {
+            document.getElementById('vista-admin').classList.add('hidden');
+            document.getElementById('vista-tienda').classList.remove('hidden');
+            cargarProductos();
+        }
+
+        async function cargarProductos() {
+            try {
+                const res = await fetch('/api/productos');
+                const productos = await res.json();
+                const grid = document.getElementById('productos-grid');
+                grid.innerHTML = '';
+                
+                productos.forEach(p => {
+                    grid.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow hover:shadow-md transition flex flex-col justify-between">
+                            <div>
+                                <img src="${p.img}" alt="${p.nombre}" onclick="abrirDetalleProducto(${p.id}, '${p.nombre}', ${p.precio}, '${p.img}', '${p.categoria}')" class="w-full h-40 object-cover rounded-md mb-3 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.02]">
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${p.categoria}</span>
+                                <h3 onclick="abrirDetalleProducto(${p.id}, '${p.nombre}', ${p.precio}, '${p.img}', '${p.categoria}')" class="font-bold text-lg mt-2 cursor-pointer hover:text-blue-600 transition">${p.nombre}</h3>
+                                <p class="text-green-600 font-bold mt-1">$${p.precio}</p>
+                            </div>
+                            <button onclick="agregarAlCarrito(${p.id}, '${p.nombre}', ${p.precio}, '${p.img}')" class="w-full mt-4 bg-gray-900 text-white py-2 rounded hover:bg-black transition">Añadir al Carrito</button>
+                        </div>
+                    `;
+                });
+            } catch (err) { console.error("Error al cargar productos:", err); }
+        }
+
+        async function cargarAdminProductos() {
+            try {
+                const res = await fetch('/api/productos');
+                const productos = await res.json();
+                const lista = document.getElementById('admin-productos-lista');
+                lista.innerHTML = '';
+                productos.forEach(p => {
+                    lista.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-2 rounded shadow-sm border">
+                            <div>
+                                <span class="font-bold">${p.nombre}</span> - <span class="text-green-600">$${p.precio}</span>
+                            </div>
+                            <button onclick="eliminarProducto(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Eliminar</button>
+                        </div>
+                    `;
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function agregarProductoAdmin(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('admin-nombre').value;
+            const categoria = document.getElementById('admin-categoria').value;
+            const precio = document.getElementById('admin-precio').value;
+            const img = document.getElementById('admin-img').value;
+
+            try {
+                const res = await fetch('/api/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, categoria, precio, img })
+                });
+                if (res.ok) {
+                    alert("¡Producto agregado con éxito!");
+                    document.getElementById('admin-nombre').value = '';
+                    document.getElementById('admin-categoria').value = '';
+                    document.getElementById('admin-precio').value = '';
+                    document.getElementById('admin-img').value = '';
+                    cargarAdminProductos();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function eliminarProducto(id) {
+            if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+            try {
+                const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+                if (res.ok) cargarAdminProductos();
+            } catch (err) { console.error(err); }
+        }
+
+        actualizarContadorCarrito();
+        cargarProductos();
+    </script>
+</body>
+</html>
